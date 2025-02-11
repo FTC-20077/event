@@ -75,7 +75,7 @@
 
     <script>
         function fetchData() {
-            const eventCode = document.getElementById('eventCode').value;
+            const eventCode = document.getElementById('eventCode').value.toUpperCase();
             fetch(`https://api.ftcscout.org/rest/v1/events/2024/${eventCode}/teams`)
                 .then(response => response.json())
                 .then(teams => {
