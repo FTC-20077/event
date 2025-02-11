@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FTC Team Stats</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap');
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            text-align: center;
+            margin: 20px;
+            background-color: #f0f8ff;
+            color: #003366;
+        }
+        h1 {
+            color: #002244;
+            font-weight: 600;
+        }
+        input, button {
+            padding: 10px;
+            margin: 10px;
+            border-radius: 5px;
+            border: 1px solid #00509e;
+            font-family: 'Poppins', sans-serif;
+        }
+        button {
+            background-color: #00509e;
+            color: white;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        button:hover {
+            background-color: #003366;
+        }
+        table {
+            width: 80%;
+            margin: 20px auto;
+            border-collapse: collapse;
+            background-color: white;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        th, td {
+            border: 1px solid #00509e;
+            padding: 10px;
+        }
+        th {
+            background-color: #00509e;
+            color: white;
+            font-weight: 600;
+        }
+        tr:nth-child(even) {
+            background-color: #e6f2ff;
+        }
+    </style>
+</head>
+<body>
+    <h1>FTC Team Stats</h1>
+    <label for="eventCode">Enter Event Code:</label>
+    <input type="text" id="eventCode">
+    <button onclick="fetchData()">Get Stats</button>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Team Number</th>
+                <th>Rank</th>
+                <th>OPR</th>
+            </tr>
+        </thead>
+        <tbody id="teamTable">
+        </tbody>
+    </table>
+
+    <script>
+        function fetchData() {
+            const eventCode = document.getElementById('eventCode').value;
+            fetch(`https://api.ftcscout.org/rest/v1/events/2024/${eventCode}/teams`)
+                .then(response => response.json())
+                .then(teams => {
+                    let teamPromises = teams.map(team => {
+                        return fetch(`https://api.ftcscout.org/rest/v1/teams/${team.teamNumber}/quick-stats?year=2024`)
+                            .then(response => response.json())
+                            .then(stats => {
+                                return {
+                                    num: team.teamNumber,
+                                    rank: stats.tot?.rank || 'N/A',
+                                    opr: stats.tot?.value || 'N/A'
+                                };
+                            });
+                    });
+
+                    Promise.all(teamPromises).then(teamList => {
+                        teamList.sort((a, b) => (b.opr === 'N/A' ? -Infinity : parseFloat(b.opr)) - (a.opr === 'N/A' ? -Infinity : parseFloat(a.opr)));
+                        let tableBody = document.getElementById('teamTable');
+                        tableBody.innerHTML = "";
+                        teamList.forEach(team => {
+                            let row = `<tr><td>${team.num}</td><td>${team.rank}</td><td>${team.opr}</td></tr>`;
+                            tableBody.innerHTML += row;
+                        });
+                    });
+                })
+                .catch(error => console.error('Error fetching data:', error));
+        }
+    </script>
+</body>
+</html>
